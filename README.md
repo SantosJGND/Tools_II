@@ -9,10 +9,10 @@ So far related with factor management to coordinate functions.
 
 Generalizing data analysis. 
 
->  [notebook](zefrv)
+>  [notebook](https://nbviewer.jupyter.org/github/SantosJGND/Tools_II/blob/master/Factor_process/Factor_walk.ipynb)
 
 ## Factor Dict
 
 Recursive hierarchic index dictionary creation from factor array. 
 
-> [script]() 
+> [script](Factor_dict/factor_dict.py) 

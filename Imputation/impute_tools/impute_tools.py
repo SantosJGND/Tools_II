@@ -2,14 +2,17 @@ from sklearn.metrics import pairwise_distances
 from sklearn.neighbors import KernelDensity
 from sklearn.decomposition import PCA
 from sklearn.model_selection import GridSearchCV
+from sklearn.cluster import estimate_bandwidth
 
 import numpy as np
+import itertools as it
 
 def rand_wdDist(genotype, nan_coords,
                wind_sizes= 100,
                 Nreps= 400,
                 ncomps= 5,
                 dimN= 2,
+                nan_idx= 0,
                 metric= 'euclidean'):
     '''
     given gentoype array, a sngle coordinate of which the column to avoid, 
@@ -98,7 +101,7 @@ def kde_likes_extract(dist_grid,dist_ref,
 ####
 
 
-def nBg_MS(subset, lb= 0.05,up= 0.8):
+def nBg_MS(subset, lb= 0.05,up= 0.8,kernel= 'gaussian',N_samps= 50):
     band_qtl = [estimate_bandwidth(subset, quantile=0.05),estimate_bandwidth(subset, quantile=0.8)]
     params = {'bandwidth': np.linspace(*band_qtl, 20)}
     grid = GridSearchCV(KernelDensity(kernel= kernel), params, cv=5, iid=False)
@@ -123,6 +126,7 @@ def gridWalk(featl,dist_ref, BG_func, BG_args= {}, std_gp_use= 0,
             N_samps= 50,
             dist_comps= 10,
             Bandwidth_split = 30,
+            metric= 'euclidean',
             kernel= 'gaussian'):
     '''
     grid narrowing using MeanShift.

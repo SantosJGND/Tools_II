@@ -1,9 +1,9 @@
 ## Imputation repository.
 
 
-This sub-directory holds work on imputation. As usual, this research is done with popuation genetic data in mind. 
+This sub-directory holds work on imputation. As usual, this research is done with population genetic data in mind. 
 
-The data consists a single genotype data set. Variables are variant count features ranging between 0 and 2; Samples are designed to derive from a semi-consistent population network. _Semi-consistent_ is used here to indicate that certain observations have variable pdfs, and the characteristics of the structure vary (edge length may change).
+The data consists a single genotype data set. Variables are variant count features ranging between 0 and 2; Samples are designed to derive from a semi-consistent population network. _Semi-consistent_ is used here to indicate that certain observations have variable pdfs, and the characteristics of the structure vary (cluster distance may change).
 
 ### Data generation
 

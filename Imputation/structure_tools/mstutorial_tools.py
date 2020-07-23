@@ -16,6 +16,7 @@ from plotly import tools
 import plotly.graph_objs as go
 from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
 
+import pandas as pd
 
 
 def Windows_KDE_amova(SequenceStore,admx_lib,refs_lib,ncomps= 4,clsize= 15,supervised= True,amova= True,Bandwidth_split= 20):

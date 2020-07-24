@@ -357,9 +357,9 @@ def comb_score(background,lclust_samp= {},dists_gens= {},
     
     bg_scores= np.array(list(bg_score.values()))
     bg_scores= np.exp(bg_scores)
-    bg_scof= np.prod(bg_scores,axis= 0)
+    
     ##
-    return bg_scof
+    return bg_scores
 
 
 

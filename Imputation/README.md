@@ -32,4 +32,4 @@ Dimensionality reduction and maximum likelihood cluster classification. Use for 
 > [notebook](https://nbviewer.jupyter.org/github/SantosJGND/Tools_II/blob/master/Imputation/Reconstruct_trees.ipynb)
 
 
-![image](impute_2rings.png)
+![image](impute_2rings2.png)

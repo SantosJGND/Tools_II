@@ -18,3 +18,18 @@ Window based analysis constructs data sets of distance data with which to predic
 
 > [notebook](https://nbviewer.jupyter.org/github/SantosJGND/Tools_II/blob/master/Imputation/Impute_I_distances.ipynb)
 
+
+### II. PCA inverse transformation.
+
+An aside on the accuracy of PCA inverse transformation.
+
+> [notebook](https://nbviewer.jupyter.org/github/SantosJGND/Tools_II/blob/master/Imputation/INV_transform.ipynb)
+
+### III. Cluster search. 
+
+Dimensionality reduction and maximum likelihood cluster classification. Use for stats, imputation. 
+
+> [notebook](https://nbviewer.jupyter.org/github/SantosJGND/Tools_II/blob/master/Imputation/Reconstruct_trees.ipynb)
+
+
+![image](impute_ring.png)

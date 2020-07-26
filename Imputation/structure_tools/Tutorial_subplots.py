@@ -5,8 +5,9 @@ from sklearn.neighbors import KernelDensity
 import numpy as np
 import itertools as it
 import plotly.graph_objs as go
-from plotly import subplots
+from plotly import tools
 from plotly.offline import iplot
+import scipy
 
 from structure_tools.vcf_geno_tools import check_densities
 
@@ -19,7 +20,7 @@ def Struct_subplots_lib(Struct_lib,vector_lib,Fsts_test,Npops= 4,Ncols= 2,range_
     titles= list(Struct_lib.keys())
     print(titles)
 
-    fig_subplots = subplots.make_subplots(rows= int(len(Struct_lib) / float(Ncols)) + (len(Struct_lib) % Ncols > 0), cols=Ncols,
+    fig_subplots = tools.make_subplots(rows= int(len(Struct_lib) / float(Ncols)) + (len(Struct_lib) % Ncols > 0), cols=Ncols,
                              subplot_titles=tuple(titles))
 
     #####
@@ -55,13 +56,13 @@ def Struct_subplots_lib(Struct_lib,vector_lib,Fsts_test,Npops= 4,Ncols= 2,range_
 
 def Rec_subplots_lib(Cop_lib,vector_lib,Npops= 4,Ncols= 2,range_diff= [0,10],steps= 100,func= 'cop_func',kwargs= 'cop_kwargs',xaxis= '',yaxis= '',title= ''):
     
-    from plotly import subplots
+    from plotly import tools
     from structure_tools.Recombination_tools import Check_cop
 
     titles= list(Cop_lib.keys())
     print(titles)
 
-    fig_subplots = subplots.make_subplots(rows= int(len(Cop_lib) / float(Ncols)) + (len(Cop_lib) % Ncols > 0), cols=Ncols,
+    fig_subplots = tools.make_subplots(rows= int(len(Cop_lib) / float(Ncols)) + (len(Cop_lib) % Ncols > 0), cols=Ncols,
                              subplot_titles=tuple(titles))
 
 
@@ -101,7 +102,7 @@ def Admixture_subplots_lib(Geneo,Ncols= 2,xaxis= '',yaxis= '',title= ''):
 
     Ncols= 2
 
-    fig_box_subplots = subplots.make_subplots(rows=int(len(snmf_gps) / float(Ncols)) + (len(snmf_gps) % Ncols > 0), cols=2,
+    fig_box_subplots = tools.make_subplots(rows=int(len(snmf_gps) / float(Ncols)) + (len(snmf_gps) % Ncols > 0), cols=2,
                              subplot_titles=tuple(['Gp: {}'.format(x) for x in snmf_gps]))
 
     for gp in range(len(snmf_gps)):
@@ -134,7 +135,7 @@ def Admixture_subplots_lib(Geneo,Ncols= 2,xaxis= '',yaxis= '',title= ''):
 
 def plot_global_classes(feats,label_lib_I,label_lib_II,color_vec_I,color_vec_II,title_I= 'lib1',title_II= 'lib2',height= 1000, width= 950):
 
-    fig_pca_subplots = subplots.make_subplots(rows=2, cols=2,subplot_titles= tuple(np.repeat([title_I,title_II],2)))
+    fig_pca_subplots = tools.make_subplots(rows=2, cols=2,subplot_titles= tuple(np.repeat([title_I,title_II],2)))
 
     for subp in range(4):
 
@@ -175,12 +176,12 @@ def plot_global_classes(feats,label_lib_I,label_lib_II,color_vec_I,color_vec_II,
     iplot(fig)
 
 
-def plot_global_pca(feats,label_select,PCA_color_ref,title= '',height= 500,width= 950):
+def plot_global_pca(feats,label_select,PCA_color_ref,labels= [],title= '',height= 500,width= 950):
     ##
 
-    from plotly import subplots
+    from plotly import tools
 
-    fig_pca_subplots = subplots.make_subplots(rows=1, cols=2,subplot_titles=tuple([title]*2))
+    fig_pca_subplots = tools.make_subplots(rows=1, cols=2,subplot_titles=tuple([title]*2))
 
     for subp in range(2):
 
@@ -188,12 +189,18 @@ def plot_global_pca(feats,label_select,PCA_color_ref,title= '',height= 500,width
 
         coords= label_select
 
+
         for i in coords.keys():
+            if not labels:
+                label_gp= [str(i)] * len(coords[i]) 
+            else:
+                label_gp= [labels[x] for x in coords[i]]
             trace= go.Scatter(
             x = feats[coords[i],0],
             y = feats[coords[i],subp + 1],
             mode= "markers",
             name= str(i),
+            text= labels,
             marker= {
             'color': PCA_color_ref[i],
             'line': {'width': 0},
@@ -224,7 +231,7 @@ def window_sample_plot(Windows,label_select,PCA_color_ref,plot_who= [],shade= []
     titles= ['window: ' + str(x) for x in windows_pick]
     titles= np.repeat(titles,2)
 
-    fig_pca_subplots = subplots.make_subplots(rows= int(len(titles) / float(Ncols)) + (len(titles) % Ncols > 0), cols=Ncols,
+    fig_pca_subplots = tools.make_subplots(rows= int(len(titles) / float(Ncols)) + (len(titles) % Ncols > 0), cols=Ncols,
                              subplot_titles=tuple(titles))
 
     n_plot= 1
@@ -265,7 +272,8 @@ def window_sample_plot(Windows,label_select,PCA_color_ref,plot_who= [],shade= []
     iplot(fig_pca_subplots)
 
 
-def PC_analysis_plot(pc_density,pc_coords,kde_class_labels,PCA_color_ref,range_windows= [],plot_choice= 'coords'):
+def PC_analysis_plot(pc_density,pc_coords,kde_class_labels,PCA_color_ref,y_range= [-5,12],
+                     range_windows= [],plot_choice= 'coords',width= 0,height= 0,qtl= 0.95,PC_sel= 0):
 
     x_range= range(len(pc_density))
     
@@ -273,10 +281,14 @@ def PC_analysis_plot(pc_density,pc_coords,kde_class_labels,PCA_color_ref,range_w
         x_range= range(range_windows[0],range_windows[1])
         
     if plot_choice == 'density':
+        from sklearn.preprocessing import scale
+        
+        denses= [z for z in it.chain(*pc_density)]
+        
         x_coords= [z for z in it.chain(*[[x] * 100 for x in x_range])]
         y_coords= [z for z in it.chain(*[list(np.linspace(-8,8,100)) for x in range(len(pc_density))])]
-        z_coords= [z for z in it.chain(*pc_density)]
-
+        z_coords= denses
+        
 
         fig_data= [go.Scatter(
         x= x_coords,
@@ -286,21 +298,21 @@ def PC_analysis_plot(pc_density,pc_coords,kde_class_labels,PCA_color_ref,range_w
             'color': z_coords,
             'colorscale':'Viridis',
             'line': {'width': 0},
-            'size': 8,
+            'size': 7,
             'symbol': 'circle',
-            "opacity": .6
+            "opacity": 1
         })
         ]
 
         layout = go.Layout(
             title= 'PC1 density',
             yaxis=dict(
-                title='PC1 density of projections across data sets'),
+                title='PC1 density of projections across data sets',
+                range= y_range),
             xaxis=dict(
                 title='Ideogram')
         )
-
-
+        
         fig= go.Figure(data=fig_data, layout=layout)
 
     if plot_choice== 'coords':
@@ -308,7 +320,7 @@ def PC_analysis_plot(pc_density,pc_coords,kde_class_labels,PCA_color_ref,range_w
         z_coords= [z for z in it.chain(*pc_coords)]
 
         class_colors= [z for z in it.chain(*[kde_class_labels for x in range(len(pc_coords))])]
-        class_colors= [PCA_color_ref[x-1] for x in class_colors]
+        class_colors= [PCA_color_ref[x] for x in class_colors]
 
         fig_data= [go.Scatter(
         x= x_coords,
@@ -316,27 +328,66 @@ def PC_analysis_plot(pc_density,pc_coords,kde_class_labels,PCA_color_ref,range_w
         mode= 'markers',
         marker= dict(
             color= class_colors,
-            size= 4,
+            size= 5,
             opacity= .8
         )
         )
         ]
+        
+        if len(list(set(kde_class_labels))) == 1:
+            inters= []
+            
+            for windl in pc_coords:
+                
+                ci = scipy.stats.norm.interval(qtl, loc=np.mean(windl), scale=np.std(windl))
+                inters.append(ci)
+            
+            inters= np.array(inters)
+            print(len(x_range))
+            print(inters.shape)
+            fig_data.append(
+                go.Scatter(
+                    x= list(x_range),
+                    y= list(inters[:,0]),
+                    mode= 'lines',
+                    name= 'Lb: {}'.format(qtl),
+                    marker= dict(
+                        color= 'black'
+                    )
+                )
+            )
+            fig_data.append(
+                go.Scatter(
+                    x= list(x_range),
+                    y= list(inters[:,1]),
+                    mode= 'lines',
+                    name= 'Ub: {}'.format(qtl),
+                    marker= dict(
+                        color= 'red'
+                    )
+                )
+            )
 
         layout = go.Layout(
-            title= 'PC1 coordinates',
+            title='Individual positions along PC{} across data sets'.format(PC_sel),
             yaxis=dict(
-                title='Individual positions along PC1 across data sets'),
+                title= 'PC{} coordinates'.format(PC_sel),
+                range= y_range),
             xaxis=dict(
                 title='data sets: extraction order')
         )
 
         fig= go.Figure(data=fig_data, layout=layout)
+    
+    if width:
+        fig['layout'].update(width= width)
+    if height:
+        fig['layout'].update(height= height)
+    
+    return fig
 
-    iplot(fig)
 
-
-
-def fst_window_plot(freq_matrix,ref_labels,sort= True,window_range= [],y_range= [0,.3]):
+def fst_window_plot(freq_matrix,ref_labels,sort= True,window_range= [],y_range= [0,.3],height= 0,width= 0):
     
     tuples= list(it.combinations(ref_labels,2))
     x_range= list(range(len(freq_matrix)))
@@ -359,21 +410,27 @@ def fst_window_plot(freq_matrix,ref_labels,sort= True,window_range= [],y_range= 
         title= 'ref Fst,sorted= {}'.format(sort),
         yaxis=dict(
             title='Fst',
-            range= [0,.3]),
+            range= y_range),
         xaxis=dict(
             title= 'data sets: '.format(['extraction order','sorted'][int(sort)]))
     )
-
+    
     fig= go.Figure(data=fig_fst, layout=layout)
+    if width:
+        fig['layout'].update(width= width)
+    if height:
+        fig['layout'].update(height= height)
 
     iplot(fig)
+
+
 
 
 def freq_dist_plt(freqs_matrix,n_chose= 100,height= 500,width= 900):
 
     title= ['across','individual']
 
-    fig_freq_subplots = subplots.make_subplots(rows=2, cols=1,subplot_titles=tuple(title))
+    fig_freq_subplots = tools.make_subplots(rows=2, cols=1,subplot_titles=tuple(title))
 
 
     Chose= np.random.choice(range(freqs_matrix.shape[0]),n_chose)

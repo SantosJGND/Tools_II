@@ -323,7 +323,7 @@ def MAC_process(Construct,Out,Cl_store,refs_lib,Fam,Names= [],target_var= [],Dr_
     func_kwargs= Cl_store[Method]['cluster_kwargs']
 
 
-    Clusterfunck= func_cl(**func_kwargs)
+    Clusterfunck= func_cl(**func_kwargs,bandwidth= bandwidth) 
     Clusterfunck.fit(COMPS)
 
     labels1 = Clusterfunck.labels_

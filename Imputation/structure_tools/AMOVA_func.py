@@ -51,7 +51,10 @@ def amova_cofactor(L,allele_profiles,populations,total_populations,metric= 'hamm
     MSAP = float(SSAP/dfAP)
     MSWP = float(SSWP/dfWP)
     N0 = float((total_samples - float(squared_count_sum/total_samples)) * float(1/(total_pops-1)))
-    VAP = float((MSAP - MSWP)/N0)
+    
+    VAP= 0
+    if N0:
+        VAP = float((MSAP - MSWP)/N0)
     if VAP + MSWP == 0:
         PhiPT = 0
     else:

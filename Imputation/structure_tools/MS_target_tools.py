@@ -10,13 +10,38 @@ from sklearn.metrics import pairwise_distances
 from plotly.offline import iplot
 
 
+def avoid_idx(data,char_avoid= [9,1],ind_thresh= 0.01):
+    """
+    get index of samples with proportion of features in char_avoid > ind_thresh.
+    """
+    nstat= np.zeros(data.shape)
+    for ix in char_avoid:
+        nm= data == ix
+        nstat+= nm
+
+    nstat= np.array(nstat,dtype= int)
+
+    nstat= np.sum(nstat,axis= 1)
+    nstat= nstat / float(data.shape[1])
+
+    nstat= nstat >= ind_thresh
+
+    nstat= np.array(nstat,dtype= int)
+    #
+    return nstat
+
+
 def MS_get_norm(Sequences,refs_lib,ncomps= 4,clsize= 15,Bandwidth_split= 20,
-               pca_qtl= 0.2):
+               pca_qtl= 0.2, char_avoid= [9,1],ind_thresh= 0.01):
     '''
     Perform PCA + Mean Shift across windows. Extract Meanshift p-value vectors. Perform amova (optional).
     '''
 
-    pca = PCA(n_components=ncomps, whiten=False,svd_solver='randomized').fit(Sequences)
+    nstat= avoid_idx(Sequences,char_avoid= char_avoid,ind_thresh= ind_thresh)
+    avoid= [x for x in range(len(nstat)) if nstat[x] == 1]
+    keep= [x for x in range(len(nstat)) if nstat[x] == 0]
+
+    pca = PCA(n_components=ncomps, whiten=False,svd_solver='randomized').fit(Sequences[keep])
     data = pca.transform(Sequences)
 
     params = {'bandwidth': np.linspace(np.min(data), np.max(data),Bandwidth_split)}
@@ -25,7 +50,7 @@ def MS_get_norm(Sequences,refs_lib,ncomps= 4,clsize= 15,Bandwidth_split= 20,
     ######################################
     ####### TEST global Likelihood #######
     ######################################
-    Focus_labels = [z for z in it.chain(*refs_lib.values())]
+    Focus_labels = [z for z in it.chain(*refs_lib.values()) if z not in avoid]
 
     #### Mean Shift approach
     ## from sklearn.cluster import MeanShift, estimate_bandwidth
@@ -37,7 +62,6 @@ def MS_get_norm(Sequences,refs_lib,ncomps= 4,clsize= 15,Bandwidth_split= 20,
     ms = MeanShift(bandwidth=bandwidth, cluster_all=False, min_bin_freq=clsize)
     ms.fit(data[Focus_labels,:])
     labels = ms.labels_
-
 
     Tree = {x:[Focus_labels[y] for y in range(len(labels)) if labels[y] == x] for x in [g for g in list(set(labels)) if g != -1]}
     Keep= [x for x in Tree.keys() if len(Tree[x]) > clsize]
@@ -67,6 +91,8 @@ def MS_get_norm(Sequences,refs_lib,ncomps= 4,clsize= 15,Bandwidth_split= 20,
         else:
             Dist = scipy.stats.norm(np.mean(P_dist),np.std(P_dist)).cdf(Dist)
             Dist= np.nan_to_num(Dist)
+            Dist[avoid]= 0
+
             dist_store[hill]= Dist
     
     return Tree, dist_store,data
@@ -242,7 +268,8 @@ def plot_distances(dists_dict,gp,range_dists,height= 500,width= 900):
 
 def target_MSP(SequenceStore,preProc_Clover, comp_label_keep, refs_lib, Whose,
                ncomps= 4, clsize= 15, Bandwidth_split= 20, out_code= -1,
-               metric= 'euclidean', cl_samp= 50, pca_qtl= .2):
+               metric= 'euclidean', cl_samp= 50, pca_qtl= .2,
+               char_avoid= [9,1],ind_thresh= 0.01):
     '''
     get dictionary of feature windows.
     Get reference MS profile kde and stats preProc_Clover and comp_label_keep.
@@ -271,7 +298,7 @@ def target_MSP(SequenceStore,preProc_Clover, comp_label_keep, refs_lib, Whose,
 
         lclust_samp, lclust_gens= clust_samp(Sequences, refs_lib, clov_pca, ref_gens, ref_stats,
               ncomps= ncomps,clsize= clsize,Bandwidth_split= Bandwidth_split,cl_samp= cl_samp,
-                pca_qtl= pca_qtl)
+                pca_qtl= pca_qtl, char_avoid= char_avoid,ind_thresh= ind_thresh)
 
         if not lclust_samp:
             continue
@@ -299,11 +326,13 @@ def target_MSP(SequenceStore,preProc_Clover, comp_label_keep, refs_lib, Whose,
 
 def clust_samp(local_l, refs_lib, clov_pca, ref_gens, ref_stats,
               ncomps= 4,clsize= 15,Bandwidth_split= 20, cl_samp= 50,
-                pca_qtl= .2, out_code= -1, return_feats= False):
+                pca_qtl= .2, out_code= -1, return_feats= False, return_acc= False,
+                char_avoid= [9,1],ind_thresh= 0.01):
     '''
+    classify local clusters, sample uing kde gens. 
     '''
     clust_acc, ms_local, feat_seq= MS_get_norm(local_l,refs_lib,ncomps= ncomps,clsize= clsize,Bandwidth_split= Bandwidth_split,
-           pca_qtl= pca_qtl)
+           pca_qtl= pca_qtl, char_avoid= char_avoid, ind_thresh= ind_thresh)
 
     mskeys= list(ms_local.keys())
 
@@ -321,13 +350,16 @@ def clust_samp(local_l, refs_lib, clov_pca, ref_gens, ref_stats,
     lclust_gens, lclust_stats= kde_gen_dict(feat_seq,clust_acc)
 
     lclust_samp= {z:g.sample(cl_samp) for z,g in lclust_gens.items()}
-    lclust_means= {z: np.mean(g,axis= 0) for z,g in lclust_samp.items()}
+    lclust_means= {z: np.median(g,axis= 0) for z,g in lclust_samp.items()}
+    
+    if return_acc:
+        return lclust_samp, lclust_gens, clust_acc
     
     if return_feats:
         return lclust_samp, lclust_gens, feat_seq
+    
     else:
         return lclust_samp, lclust_gens
-
 
 
 

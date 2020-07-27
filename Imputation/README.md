@@ -31,9 +31,17 @@ Dimensionality reduction and maximum likelihood cluster classification. Use for 
 
 > [notebook](https://nbviewer.jupyter.org/github/SantosJGND/Tools_II/blob/master/Imputation/Reconstruct_trees.ipynb)
 
-**application**
+### Application to rice data.
+
+**i. cluster distance and imputation**
+
 Application of the cluster search and inference pipeline on 3000 Rice Genomes data. Focus on Japonica and cBasmati variation. Distance inference now performed within 1MB of focal target. 
 
 > [notebook](https://nbviewer.jupyter.org/github/SantosJGND/Tools_II/blob/master/Imputation/rice_ClusterSearch.ipynb)
+
+**ii. targeted Ne estimation at local windows**
+
+> [notebook](https://nbviewer.jupyter.org/github/SantosJGND/Tools_II/blob/master/Imputation/Theta_ClusterSearch.ipynb)
+
 
 ![image](figures/impute_2rings2.png)

@@ -200,7 +200,7 @@ def plot_global_pca(feats,label_select,PCA_color_ref,labels= [],title= '',height
             y = feats[coords[i],subp + 1],
             mode= "markers",
             name= str(i),
-            text= labels,
+            text= label_gp,
             marker= {
             'color': PCA_color_ref[i],
             'line': {'width': 0},

@@ -19,7 +19,30 @@ from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
 import pandas as pd
 
 
-def Windows_KDE_amova(SequenceStore,admx_lib,refs_lib,ncomps= 4,clsize= 15,supervised= True,amova= True,Bandwidth_split= 20):
+def avoid_idx(data,char_avoid= [9,1],ind_thresh= 0.01):
+    """
+    get index of samples with proportion of features in char_avoid > ind_thresh.
+    """
+    nstat= np.zeros(data.shape)
+    for ix in char_avoid:
+        nm= data == ix
+        nstat+= nm
+
+    nstat= np.array(nstat,dtype= int)
+
+    nstat= np.sum(nstat,axis= 1)
+    nstat= nstat / float(data.shape[1])
+
+    nstat= nstat >= ind_thresh
+
+    nstat= np.array(nstat,dtype= int)
+    #
+    return nstat
+
+
+def Windows_KDE_amova(SequenceStore,admx_lib,refs_lib,ncomps= 4,clsize= 15,
+                    supervised= True,amova= True,Bandwidth_split= 20,
+                    char_avoid= [9,1],ind_thresh= 0.01):
     '''
     Perform PCA + Mean Shift across windows. Extract Meanshift p-value vectors. Perform amova (optional).
     '''
@@ -39,7 +62,6 @@ def Windows_KDE_amova(SequenceStore,admx_lib,refs_lib,ncomps= 4,clsize= 15,super
     Construct = recursively_default_dict()
     PC_var= recursively_default_dict()
 
-
     for CHR in SequenceStore.keys():
         print('going on CHR: '+ str(CHR))
         for c in SequenceStore[CHR].keys():
@@ -49,8 +71,14 @@ def Windows_KDE_amova(SequenceStore,admx_lib,refs_lib,ncomps= 4,clsize= 15,super
             Sequences= np.array(Sequences) 
 
             Sequences= np.nan_to_num(Sequences)
+            nstat= avoid_idx(Sequences,char_avoid= char_avoid,ind_thresh= ind_thresh)
+            avoid= [x for x in range(len(nstat)) if nstat[x] == 1]
+            keep= [x for x in range(len(nstat)) if nstat[x] == 0]
+            
+            if len(keep) < 10:
+                continue
 
-            pca = PCA(n_components=ncomps, whiten=False,svd_solver='randomized').fit(Sequences)
+            pca = PCA(n_components=ncomps, whiten=False,svd_solver='randomized').fit(Sequences[keep])
             data = pca.transform(Sequences)
             PC_var[CHR][c]= [x for x in pca.explained_variance_]
 
@@ -60,7 +88,7 @@ def Windows_KDE_amova(SequenceStore,admx_lib,refs_lib,ncomps= 4,clsize= 15,super
             ######################################
             ####### TEST global Likelihood #######
             ######################################
-            Focus_labels = [z for z in it.chain(*refs_lib.values())]
+            Focus_labels = [z for z in it.chain(*refs_lib.values()) if z not in avoid]
 
             #### Mean Shift approach
             ## from sklearn.cluster import MeanShift, estimate_bandwidth
@@ -100,6 +128,7 @@ def Windows_KDE_amova(SequenceStore,admx_lib,refs_lib,ncomps= 4,clsize= 15,super
                 else:
                     Dist = scipy.stats.norm(np.mean(P_dist),np.std(P_dist)).cdf(Dist)
                 Dist= np.nan_to_num(Dist)
+                Dist[avoid]= 0
                 Construct[CHR][c][hill] = Dist
 
 
